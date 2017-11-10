@@ -191,14 +191,16 @@ func main() {
 			Value:  "localhost",
 		},
 		cli.IntFlag{
-			Name:  "wait-time, w",
-			Usage: "Wait time between how often stats should be requested from the Docker stats API",
-			Value: 5,
+			Name:   "wait-time, w",
+			Usage:  "Wait time between how often stats should be requested from the Docker stats API",
+			EnvVar: "COLLECTD_INTERVAL",
+			Value:  5,
 		},
 		cli.IntFlag{
-			Name:  "interval, i",
-			Usage: "Set interval for collecting metrics",
-			Value: 60,
+			Name:   "interval, i",
+			Usage:  "Set interval for collecting metrics",
+			EnvVar: "COLLECTD_INTERVAL",
+			Value:  60,
 		},
 	}
 
