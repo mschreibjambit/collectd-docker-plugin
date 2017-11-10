@@ -130,8 +130,8 @@ func getStats(containerID string) {
 
 func listContainers(ctx *cli.Context) {
 	host = ctx.String("collectd-hostname")
-	waitTime = ctx.Int("wait-time")
-	interval = ctx.Int("interval")
+	waitTime = int(ctx.Float64("wait-time"))
+	interval = int(ctx.Float64("interval"))
 
 	var err interface{}
 	if ctx.Bool("docker-environment") {
@@ -190,13 +190,13 @@ func main() {
 			EnvVar: "COLLECTD_HOSTNAME",
 			Value:  "localhost",
 		},
-		cli.IntFlag{
+		cli.Float64Flag{
 			Name:   "wait-time, w",
 			Usage:  "Wait time between how often stats should be requested from the Docker stats API",
 			EnvVar: "COLLECTD_INTERVAL",
 			Value:  5,
 		},
-		cli.IntFlag{
+		cli.Float64Flag{
 			Name:   "interval, i",
 			Usage:  "Set interval for collecting metrics",
 			EnvVar: "COLLECTD_INTERVAL",
@@ -204,5 +204,7 @@ func main() {
 		},
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatalln(err)
+	}
 }
