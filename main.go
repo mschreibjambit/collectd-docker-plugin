@@ -91,7 +91,6 @@ func callStats(container *docker.Container, containerName string, stream bool) e
 	go func() {
 		errC <- client.Stats(docker.StatsOptions{ID: container.ID, Stats: statsC, Stream: stream})
 	}()
-
 	for {
 		stats, ok := <-statsC
 		if !ok {
@@ -99,7 +98,6 @@ func callStats(container *docker.Container, containerName string, stream bool) e
 		}
 		processStats(containerName, stats)
 	}
-
 	err := <-errC
 	if stream && err != nil {
 		log.Fatal(err)
@@ -119,11 +117,12 @@ func getStats(containerID string) {
 		callStats(container, containerName, true)
 	} else {
 		for {
+			t := time.NewTimer(time.Duration(waitTime) * time.Second)
 			err := callStats(container, containerName, false)
 			if err != nil {
 				break
 			}
-			time.Sleep(time.Duration(waitTime) * time.Second)
+			<-t.C
 		}
 	}
 }
