@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -22,9 +21,15 @@ var (
 	interval int
 )
 
-func printCollectD(containerName, statType, statTypeInstance string, value uint64) {
-	valueString := strconv.FormatUint(value, 10)
-	fmt.Printf("PUTVAL \"%s/docker-%s/%s-%s\" interval=%d N:%s\n", host, containerName, statType, statTypeInstance, interval, valueString)
+func printCollectD(containerName, statType, statTypeInstance string, value interface{}) {
+	switch i := value.(type) {
+	case uint, uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+		fmt.Printf("PUTVAL \"%s/docker-%s/%s-%s\" interval=%d N:%d\n", host, containerName, statType, statTypeInstance, interval, value)
+	case float32, float64:
+		fmt.Printf("PUTVAL \"%s/docker-%s/%s-%s\" interval=%d N:%0.2f\n", host, containerName, statType, statTypeInstance, interval, value)
+	default:
+		log.Fatalf("Could not print Type %s Value %v", i, value)
+	}
 }
 
 func toUnderscore(key string) string {
@@ -39,7 +44,7 @@ func processStats(containerName string, stats *docker.Stats) {
 		printCollectD(containerName, "memory", toUnderscore(key), value.(uint64))
 	}
 	memoryPercent := (float64(stats.MemoryStats.Stats.TotalRss) * 100.0) / float64(stats.MemoryStats.Limit)
-	printCollectD(containerName, "memory", "percent_usage", uint64(memoryPercent))
+	printCollectD(containerName, "memory", "percent_usage", memoryPercent)
 
 	// CPU
 	printCollectD(containerName, "cpu", "total_usage", stats.CPUStats.CPUUsage.TotalUsage)
@@ -50,7 +55,7 @@ func processStats(containerName string, stats *docker.Stats) {
 	if systemDelta > 0.0 && cpuDelta > 0.0 {
 		cpuPercent = (cpuDelta / systemDelta) * float64(len(stats.CPUStats.CPUUsage.PercpuUsage)) * 100.0
 	}
-	printCollectD(containerName, "cpu", "percent_usage", uint64(cpuPercent))
+	printCollectD(containerName, "cpu", "percent_usage", cpuPercent)
 	printCollectD(containerName, "cpu", "kernel_mode", stats.CPUStats.CPUUsage.UsageInKernelmode-stats.PreCPUStats.CPUUsage.UsageInKernelmode)
 	printCollectD(containerName, "cpu", "user_mode", stats.CPUStats.CPUUsage.UsageInUsermode-stats.PreCPUStats.CPUUsage.UsageInUsermode)
 
